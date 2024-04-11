@@ -11,3 +11,4 @@ class Config:
     inner_state: int = 3072
     device: str = "cpu"
     n_class: int = 2
+    
