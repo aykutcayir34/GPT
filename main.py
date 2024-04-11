@@ -89,3 +89,47 @@ class GPT(nn.Module):
             output = layer(output)
 
         return output
+
+class LMHead(nn.Module):
+    def __init__(self, config, gpt):
+        super().__init__()
+        self.gpt = gpt
+        self.prediction = nn.Linear(config.d_model, config.vocab_size, bias=False)
+        self.prediction.weights = gpt.word_embedding.weight
+
+    def forward(self, x):
+        out = self.gpt(x)
+        logits = self.prediction(out)
+        return logits
+
+class CLSHead(nn.Module):
+    def __init__(
+        self,
+        config,
+        gpt
+        ):
+
+        super().__init__()
+        self.gpt = gpt
+        self.prediction = nn.Linear(config.d_model, config.vocab_size, bias=False)
+        self.prediction.weights = gpt.word_emb.weight
+        self.classifier = nn.Linear(config.d_model, config.n_class)
+
+        nn.init.normal_(self.classifier.weight, std=0.02)
+        
+    def forward(self, x: Tensor) -> Tensor:
+        dec_out = self.gpt(x)
+
+        lm_logits = self.prediction(dec_out)
+        cls_logits = self.classifier(dec_out)
+        return lm_logits, cls_logits
+
+if __name__ == "__main__":
+    config = Config()
+    gpt = GPT(config)
+    lm_test = LMHead(config, gpt)
+    cls_test = CLSHead(config, gpt)
+    logits = lm_test(torch.randint(0, config.vocab_size, (1, config.window)))
+    print(logits.shape)
+    lm_logits, cls_logits = cls_test(torch.randint(0, config.vocab_size, (1, config.window)))
+    print(lm_logits.shape, cls_logits.shape)
