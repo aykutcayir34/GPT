@@ -48,7 +48,7 @@ class DecoderLayer(nn.Module):
         self.dropout = nn.Dropout(p=config.p)
 
         nn.init.normal_(self.feed_forward_module[0].weight, 0, 0.02)
-        nn.init.normal_(self.feed_forward_module[1].weight, 0, 0.02)
+        nn.init.normal_(self.feed_forward_module[2].weight, 0, 0.02)
 
     def forward(self, x: Tensor) -> Tensor:
         B, L, D = x.shape
@@ -112,7 +112,7 @@ class CLSHead(nn.Module):
         super().__init__()
         self.gpt = gpt
         self.prediction = nn.Linear(config.d_model, config.vocab_size, bias=False)
-        self.prediction.weights = gpt.word_emb.weight
+        self.prediction.weights = gpt.word_embedding.weight
         self.classifier = nn.Linear(config.d_model, config.n_class)
 
         nn.init.normal_(self.classifier.weight, std=0.02)
