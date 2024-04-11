@@ -70,5 +70,22 @@ class DecoderLayer(nn.Module):
         added_norm2 = self.layer_norm2(added_norm1 + self.feed_forward_module(added_norm1))
         return added_norm2 
 
+class GPT(nn.Module):
+    def __init__(self, config):
+        super().__init__()
+        self.config = config
+        self.word_embedding = nn.Embedding(config.vocab_size, config.d_model)
+        self.position_embedding = nn.Embedding(config.window, config.d_model)
+        self.decoder = nn.ModuleList([DecoderLayer(config) for _ in range(config.layers)])
+        self.dropout = nn.Dropout(p=config.p)
+        
+        nn.init.normal_(self.word_embedding.weight, 0, 0.02)
 
+    def forward(self, x: Tensor) -> Tensor:
+        B, L = x.shape
+        positions = torch.arange(0, L).expand(B, L).to(self.config.device)
+        output = self.dropout(self.word_embedding(x) + self.position_embedding(positions))
+        for layer in self.decoder:
+            output = layer(output)
 
+        return output
